@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+
+  <!-- Google Fonts - Roboto -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <!-- Docsify Theme - Light Mode -->
+  <link rel="stylesheet" media="(prefers-color-scheme: light)"
+    href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">
+
+  <!-- Docsify Theme - Dark Mode -->
+  <link rel="stylesheet" media="(prefers-color-scheme: dark)"
+    href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
+
+  <!-- Prism Theme - Light Mode -->
+  <link rel="stylesheet" media="(prefers-color-scheme: light)"
+    href="https://cdn.jsdelivr.net/npm/prism-themes/themes/prism-one-light.css">
+
+  <!-- Prism Theme - Dark Mode -->
+  <link rel="stylesheet" media="(prefers-color-scheme: dark)"
+    href="https://cdn.jsdelivr.net/npm/prism-themes/themes/prism-vsc-dark-plus.css">
+
+  <!-- Custom Theme -->
+  <link rel="stylesheet" href="custom-theme.css">
+
+</head>
+
+<body>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: 'Auth Engine',
+      repo: 'https://github.com/Celestial-0/Auth-Engine',
+      themeable: {
+        readyTransition: true,
+        responsiveTables: true
+      },
+      copyCode: {
+        buttonText: 'Copy',
+        errorText: 'Error',
+        successText: 'Copied',
+      },
+    }
+  </script>
+  <!-- Docsify v4 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <!-- Latest v2.x.x -->
+  <script src="https://unpkg.com/docsify-copy-code@2"></script>
+
+  <!-- docsify-themeable -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/js/docsify-themeable.min.js"></script>
+
+  <!-- Prism language support -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-go.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-rust.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-docker.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-json.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-markdown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-jsx.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-tsx.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-sql.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-text.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-mermaid.min.js"></script>
+
+  <!-- Mermaid for diagrams -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+    // Detect dark mode
+    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: isDark ? 'dark' : 'default',
+      themeVariables: {
+        primaryColor: isDark ? '#2a2a2a' : '#f5f5f5',
+        primaryTextColor: isDark ? '#e5e5e5' : '#1a1a1a',
+        primaryBorderColor: isDark ? '#4a4a4a' : '#d4d4d4',
+        lineColor: isDark ? '#888888' : '#666666',
+        secondaryColor: isDark ? '#3a3a3a' : '#e5e5e5',
+        tertiaryColor: isDark ? '#404040' : '#fafafa',
+        background: isDark ? '#1a1a1a' : '#ffffff',
+        mainBkg: isDark ? '#2a2a2a' : '#f5f5f5',
+        secondaryBkg: isDark ? '#333333' : '#e8e8e8',
+        tertiaryBkg: isDark ? '#404040' : '#fafafa',
+        textColor: isDark ? '#e5e5e5' : '#1a1a1a',
+        border1: isDark ? '#4a4a4a' : '#d4d4d4',
+        border2: isDark ? '#555555' : '#c4c4c4',
+        clusterBkg: isDark ? '#252525' : '#f0f0f0',
+        clusterBorder: isDark ? '#4a4a4a' : '#d4d4d4',
+        fontFamily: 'Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        fontSize: '14px'
+      },
+      flowchart: {
+        curve: 'basis',
+        padding: 30,
+        nodeSpacing: 60,
+        rankSpacing: 60,
+        subGraphTitleMargin: {
+          top: 10,
+          bottom: 10
+        },
+        htmlLabels: true,
+        edgeLabelBackground: isDark ? '#1a1a1a' : '#ffffff'
+      }
+    });
+
+    window.mermaid = mermaid;
+  </script>
+  <script src="//unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
+
+  <!-- Recommended -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/zoom-image.min.js"></script>
+
+</body>
+
+</html>
