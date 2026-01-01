@@ -48,29 +48,44 @@ BETTER_AUTH_URL=http://localhost:4000
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081
 ```
 
+## API Testing Dashboard
+
+Access the interactive API testing dashboard at:
+```
+http://localhost:4000/
+```
+
+The dashboard provides a professional UI to test all authentication endpoints with real-time feedback.
+
 ## API Endpoints
 
 ### Sign Up
 ```
-POST /api/auth/sign-up
+POST /api/auth/sign-up/email
 Headers: x-application-name: your-app-name
+Body: { "name": "...", "email": "...", "password": "..." }
 ```
 
 ### Sign In
 ```
-POST /api/auth/sign-in
+POST /api/auth/sign-in/email
 Headers: x-application-name: your-app-name
+Body: { "email": "...", "password": "..." }
 ```
 
-### Get Session
-```
-GET /api/auth/session
-```
+### Session Management
+
+Better Auth uses **HTTP-only cookies** for session management. When you sign in:
+- A `better-auth.session_token` cookie is automatically set
+- Session data is included in the sign-in/sign-up response
+- Sessions expire after 7 days by default
+- No separate "get session" endpoint is needed
 
 ### Sign Out
 ```
 POST /api/auth/sign-out
 ```
+Clears the session cookie and invalidates the session.
 
 ## Documentation
 

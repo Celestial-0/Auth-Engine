@@ -12,6 +12,8 @@ An authentication microservice built with Fastify and Better Auth.
 - [Features](#features)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
+  - [Server](#server)
+  - [Client](#client)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -19,7 +21,12 @@ An authentication microservice built with Fastify and Better Auth.
   - [Database Setup](#database-setup)
 - [API Documentation](#api-documentation)
   - [Authentication Endpoints](#authentication-endpoints)
+  - [OTP Endpoints](#otp-endpoints)
   - [Health Check](#health-check)
+- [Client Application](#client-application)
+  - [Client Overview](#client-overview)
+  - [Client Setup](#client-setup)
+  - [Client Architecture](#client-architecture)
 - [Project Structure](#project-structure)
 - [Development](#development)
 - [Deployment](#deployment)
@@ -31,14 +38,27 @@ An authentication microservice built with Fastify and Better Auth.
 
 ## Overview
 
-Auth Engine is an authentication microservice that provides user authentication for multiple applications. Built with [Better Auth](https://better-auth.com/) and [Fastify](https://www.fastify.io/), it manages user sessions, credentials, and multi-application authentication.
+Auth Engine is a full-stack authentication solution consisting of a **server** microservice and a **client** application. The server is built with [Better Auth](https://better-auth.com/) and [Fastify](https://www.fastify.io/), while the client is a modern React application with TypeScript and Tailwind CSS.
 
 ### Features
 
+**Server Features:**
+- Email/password authentication with Better Auth
+- **OTP (One-Time Password) authentication** via email
+- Email verification with Resend integration
 - Session management with configurable expiration
 - Multi-application support with application-scoped user isolation
 - PostgreSQL database for data persistence
 - CORS configuration for cross-origin requests
+
+**Client Features:**
+- Modern React 19 with TypeScript
+- Responsive UI with Tailwind CSS 4
+- Light/dark theme support
+- Modular component architecture
+- Real-time form validation
+- OTP verification flow
+- Session management
 
 ---
 
@@ -48,38 +68,43 @@ Auth Engine is an authentication microservice that provides user authentication 
 
 ```mermaid
 flowchart TD
-    A[Client Apps<br/>Mobile/Web] -->|HTTP/HTTPS<br/>x-application-name header| B[CORS Middleware]
+    A["Client Application<br/>(React + Vite)"] -->|HTTP/HTTPS<br/>x-application-name header| B[CORS Middleware]
     
-    subgraph Engine[Auth Engine - Fastify]
+    subgraph Server["Auth Engine Server (Fastify)"]
         B[CORS Middleware]
         C[Better Auth Handler]
-        D[Sign Up]
-        E[Sign In]
+        D[Email/Password Auth]
+        E[OTP Authentication]
         F[Session Management]
+        G[Email Verification]
         
         B --> C
+        B --> E
         C --> D
-        C --> E
         C --> F
+        C --> G
     end
     
-    Engine --> G[(PostgreSQL Database)]
+    Server --> H[(PostgreSQL Database)]
+    E -.->|Resend API| I[Email Service]
+    G -.->|Resend API| I
     
     subgraph Database[PostgreSQL Database]
-        H[Users]
-        I[Sessions]
-        J[Accounts]
-        K[Verifications]
+        J[Users]
+        K[Sessions]
+        L[Accounts]
+        M[Verifications]
     end
     
-    G -.-> H
-    G -.-> I
-    G -.-> J
-    G -.-> K
+    H -.-> J
+    H -.-> K
+    H -.-> L
+    H -.-> M
 ```
 
 ### Request Flow
 
+**Standard Authentication Flow:**
 1. **Client Request** → Application sends authentication request with `x-application-name` header
 2. **CORS Validation** → Origin checked against allowed list
 3. **Header Validation** → Application name verified for sign-up/sign-in
@@ -87,9 +112,19 @@ flowchart TD
 5. **Database Operation** → User/session data persisted to PostgreSQL
 6. **Response** → Session token and user data returned to client
 
+**OTP Authentication Flow:**
+1. **Send OTP** → Client requests OTP for email address
+2. **Generate & Store** → Server generates 6-digit OTP, stores in database with expiration
+3. **Email Delivery** → OTP sent via Resend email service
+4. **Verify OTP** → Client submits OTP for verification
+5. **Validation** → Server validates OTP and expiration
+6. **Session Creation** → Valid OTP creates user session and returns token
+
 ---
 
 ## Tech Stack
+
+### Server
 
 | Component | Technology | Version | Purpose |
 |-----------|-----------|---------|---------|
@@ -99,8 +134,23 @@ flowchart TD
 | **Auth Library** | Better Auth | 1.4+ | Authentication logic |
 | **Database** | PostgreSQL | 14+ | Data persistence |
 | **Database Client** | pg | 8.16+ | PostgreSQL driver |
+| **Email Service** | Resend | 6.6+ | Transactional emails (OTP) |
 | **CORS** | @fastify/cors | 11.2+ | Cross-origin handling |
+| **Validation** | Zod | 4.2+ | Schema validation |
 | **Dev Tools** | tsx | 4.21+ | TypeScript execution |
+
+### Client
+
+| Component | Technology | Version | Purpose |
+|-----------|-----------|---------|---------|
+| **Framework** | React | 19.2+ | UI library |
+| **Language** | TypeScript | 5.9+ | Type-safe development |
+| **Build Tool** | Vite | 7.2+ | Fast build tooling |
+| **Styling** | Tailwind CSS | 4.1+ | Utility-first CSS |
+| **UI Components** | Radix UI | Latest | Accessible components |
+| **Icons** | Lucide React | 0.562+ | Icon library |
+| **Validation** | Zod | 4.3+ | Schema validation |
+| **Utilities** | clsx, tailwind-merge | Latest | Class name utilities |
 
 ---
 
@@ -160,8 +210,12 @@ DATABASE_URL=postgresql://username:password@localhost:5432/auth_db
 BETTER_AUTH_SECRET=your-super-secret-key-min-32-chars
 BETTER_AUTH_URL=http://localhost:4000
 
+# Email Service (Resend)
+RESEND_API_KEY=re_your_api_key_here
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+
 # CORS Configuration
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
 #### Environment Variable Details
@@ -172,7 +226,9 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
 | `BETTER_AUTH_SECRET` | Secret key for session encryption (min 32 chars) | `your-random-secret-key-here` |
 | `BETTER_AUTH_URL` | Base URL of the auth service | `http://localhost:4000` |
-| `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins | `http://localhost:3000,https://app.com` |
+| `RESEND_API_KEY` | Resend API key for sending emails | `re_abc123...` |
+| `RESEND_FROM_EMAIL` | Email address to send from | `noreply@yourdomain.com` |
+| `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins | `http://localhost:5173,https://app.com` |
 
 ### Database Setup
 
@@ -413,6 +469,125 @@ Cookie: better-auth.session_token=<session-token>
 }
 ```
 
+### OTP Endpoints
+
+#### Send OTP
+
+**Endpoint:** `POST /api/auth/send-otp`
+
+**Headers:**
+```http
+Content-Type: application/json
+x-application-name: your-app-name
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "OTP sent successfully",
+  "expiresIn": 600
+}
+```
+
+**Error Responses:**
+```json
+// Missing application header
+{
+  "success": false,
+  "message": "x-application-name header is required"
+}
+
+// Invalid email
+{
+  "success": false,
+  "message": "Invalid email format"
+}
+```
+
+#### Verify OTP
+
+**Endpoint:** `POST /api/auth/verify-otp`
+
+**Headers:**
+```http
+Content-Type: application/json
+x-application-name: your-app-name
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "OTP verified successfully",
+  "user": {
+    "id": "usr_abc123",
+    "email": "user@example.com",
+    "application": "your-app-name"
+  },
+  "session": {
+    "token": "session-token-here",
+    "expiresAt": "2026-01-08T00:00:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+```json
+// Invalid OTP
+{
+  "success": false,
+  "message": "Invalid OTP"
+}
+
+// Expired OTP
+{
+  "success": false,
+  "message": "OTP has expired"
+}
+```
+
+#### Resend OTP
+
+**Endpoint:** `POST /api/auth/resend-otp`
+
+**Headers:**
+```http
+Content-Type: application/json
+x-application-name: your-app-name
+```
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "OTP resent successfully",
+  "expiresIn": 600
+}
+```
+
 ### Health Check
 
 **Endpoint:** `GET /health`
@@ -441,59 +616,200 @@ The service validates the `Origin` header against the `ALLOWED_ORIGINS` environm
 
 ---
 
+## Client Application
+
+### Client Overview
+
+The client is a modern React application built with Vite, providing a beautiful and responsive UI for authentication. It features:
+
+- **Modular Components**: Separate components for SignUp, SignIn, Session, and OTP flows
+- **Theme Support**: Light and dark mode with smooth transitions
+- **Real-time Validation**: Form validation with Zod schemas
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
+- **Accessible UI**: Built with Radix UI primitives
+
+### Client Setup
+
+```bash
+# Navigate to client directory
+cd client
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+The client will start on `http://localhost:5173` by default.
+
+### Client Architecture
+
+```mermaid
+flowchart TD
+    A[App.tsx] --> B[Dashboard Component]
+    A --> C[Theme Provider]
+    A --> D[Theme Toggler]
+    
+    B --> E[Tabs Component]
+    
+    E --> F[SignUp Tab]
+    E --> G[SignIn Tab]
+    E --> H[Session Tab]
+    E --> I[OTP Tab]
+    
+    F --> J[Auth Context]
+    G --> J
+    H --> J
+    I --> J
+    
+    J --> K[Auth Client]
+    K --> L[API Calls]
+    
+    L -.->|HTTP| M[Auth Server]
+    
+    style A fill:#667eea
+    style B fill:#764ba2
+    style J fill:#f093fb
+    style K fill:#4facfe
+```
+
+**Component Breakdown:**
+
+- **Dashboard.tsx**: Main container with tabbed interface
+- **SignUp.tsx**: User registration form with validation
+- **SignIn.tsx**: User login form
+- **Session.tsx**: Display current session information
+- **Otp.tsx**: OTP request and verification flow
+- **AuthContext.tsx**: Global authentication state management
+- **auth-client.ts**: API client for server communication
+
+---
+
 ## Project Structure
 
 ```bash
 auth-engine/
-├── src/
-│   ├── auth.ts              # Better Auth configuration
-│   ├── server.ts            # Fastify server setup and routes
-│   ├── migration.ts         # Database migration runner
-│   └── migrations/          # SQL migration files
-│       └── 2025-12-29T20-35-28.023Z.sql
+├── server/                  # Backend microservice
+│   ├── src/
+│   │   ├── auth.ts          # Better Auth configuration
+│   │   ├── server.ts        # Fastify server setup and routes
+│   │   ├── otp.ts           # OTP generation and verification
+│   │   ├── migration.ts     # Database migration runner
+│   │   └── migrations/      # SQL migration files
+│   ├── dist/                # Compiled JavaScript (generated)
+│   ├── .env                 # Environment variables (gitignored)
+│   ├── package.json         # Server dependencies
+│   └── tsconfig.json        # TypeScript configuration
+├── client/                  # Frontend application
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── core/        # Auth components
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── SignUp.tsx
+│   │   │   │   ├── SignIn.tsx
+│   │   │   │   ├── Session.tsx
+│   │   │   │   └── Otp.tsx
+│   │   │   ├── ui/          # Reusable UI components
+│   │   │   └── theme-provider.tsx
+│   │   ├── contexts/
+│   │   │   └── AuthContext.tsx
+│   │   ├── lib/
+│   │   │   └── auth-client.ts
+│   │   ├── types/
+│   │   │   └── auth.ts
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   └── index.css
+│   ├── public/
+│   ├── index.html
+│   ├── package.json         # Client dependencies
+│   ├── vite.config.ts       # Vite configuration
+│   └── tsconfig.json        # TypeScript configuration
 ├── docs/                    # Documentation files
 │   ├── README.md            # This file
-│   ├── index.html           # Documentation website
+│   ├── index.html           # Docsify documentation site
 │   └── custom-theme.css     # Documentation styling
-├── dist/                    # Compiled JavaScript (generated)
-├── node_modules/            # Dependencies (generated)
-├── .env                     # Environment variables (gitignored)
-├── .gitignore               # Git ignore rules
-├── package.json             # Project metadata and scripts
-├── tsconfig.json            # TypeScript configuration
-└── README.md                # Project overview
+└── .git/                    # Git repository
 ```
 
 ### File Descriptions
 
-#### `src/auth.ts`
+#### Server Files
+
+**`server/src/auth.ts`**
 Configures Better Auth with:
 - PostgreSQL database connection
 - Email/password authentication
+- Email verification with OTP support
 - Custom `application` field for multi-app support
 - Session expiration settings (7 days)
+- Resend integration for email delivery
 
-#### `src/server.ts`
+**`server/src/server.ts`**
 Main application server that:
 - Initializes Fastify with logging
 - Registers CORS middleware
 - Implements application header validation
 - Proxies requests to Better Auth
+- Provides OTP endpoints (send, verify, resend)
+- Provides custom session endpoint
 - Provides health check endpoint
 
-#### `src/migration.ts`
+**`server/src/otp.ts`**
+OTP authentication logic:
+- Generates 6-digit OTP codes
+- Stores OTP in database with expiration (10 minutes)
+- Sends OTP via Resend email service
+- Validates OTP and creates user sessions
+- Handles OTP resend with rate limiting
+
+**`server/src/migration.ts`**
 Database migration runner that:
 - Reads SQL files from `migrations/` directory
 - Executes migrations in alphabetical order
 - Uses transactions for safety (rollback on error)
 - Provides detailed logging
 
-#### `src/migrations/*.sql`
-SQL migration files containing:
-- Table creation statements
-- Index definitions
-- Constraint definitions
-- Schema modifications
+#### Client Files
+
+**`client/src/components/core/Dashboard.tsx`**
+Main dashboard component:
+- Tabbed interface for different auth flows
+- Manages active tab state
+- Responsive layout with gradient background
+
+**`client/src/components/core/SignUp.tsx`**
+User registration component:
+- Form validation with Zod
+- Password strength indicator
+- Error handling and display
+- Integration with AuthContext
+
+**`client/src/components/core/SignIn.tsx`**
+User login component:
+- Email/password authentication
+- Form validation
+- Session creation on success
+
+**`client/src/components/core/Otp.tsx`**
+OTP authentication flow:
+- OTP request form
+- OTP verification with 6-digit input
+- Resend functionality with countdown timer
+- Session creation on successful verification
+
+**`client/src/contexts/AuthContext.tsx`**
+Global authentication state:
+- User session management
+- Authentication methods (signUp, signIn, signOut)
+- Session persistence
+
+**`client/src/lib/auth-client.ts`**
+API client for server communication:
+- HTTP client configuration
+- API endpoint wrappers
+- Error handling
 
 ---
 
@@ -818,16 +1134,19 @@ For questions, issues, or feature requests:
 
 Future enhancements planned:
 
-- [ ] Email verification flow
+- [x] Email verification flow (via OTP)
+- [x] OTP authentication
+- [x] Client application with React
 - [ ] Password reset functionality
 - [ ] Two-factor authentication (2FA)
 - [ ] OAuth provider support (Google, GitHub, etc.)
-- [ ] Rate limiting
+- [ ] Rate limiting for OTP endpoints
 - [ ] Admin dashboard
 - [ ] User management API
 - [ ] Audit logging
 - [ ] Refresh token rotation
 - [ ] Account deletion/deactivation
+- [ ] Mobile application (React Native)
 
 ---
 
